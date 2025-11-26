@@ -4,13 +4,16 @@ import random
 #  Hill climbing local search algorithm
 
 # Read file 
-file = open("tourism_5.txt", 'r')
+file = open("tourism_100.txt", 'r')
 
 line_list = file.readlines()
 
 
 # C is the ammount of total landmarks, and m is the amount to be in the solution
 c, m = line_list[0].split()
+
+c = int(c)
+m = int(m)
 
 line_list.pop(0)
 lines = []
@@ -19,8 +22,17 @@ for i in range(len(line_list)):
     lines.append(line_list[i].split())
 
 
-c = int(c)
-m = int(m)
+# Create a matrix to keep track of distances
+distances = np.zeros((c, c))
+
+for line in lines:
+    i = int(line[0][1:]) - 1  
+    j = int(line[1][1:]) - 1  
+    dist = float(line[2])
+    
+    distances[i][j] = dist
+    distances[j][i] = dist
+
 
 # Generate a random beginning solution
 # A soultion is represented by binary list, where 1 means the landmark is included and 0 means it isnt 
@@ -36,7 +48,7 @@ def find_random_start() :
 
     return solution
 
-
+"""
 # Calculate cost of a solution 
 def calculate_cost(sol):
     indicies = np.where(sol == 1)[0]
@@ -51,6 +63,22 @@ def calculate_cost(sol):
             sum += float(lines[i][2])
 
     return sum / m
+
+"""
+
+# Calculate cost of a solution 
+def calculate_cost(sol):
+    indices = np.where(sol == 1)[0]
+
+    sum = 0
+    for i in range(len(indices)):
+        for j in range(i + 1, len(indices)):
+            idx_i = indices[i]
+            idx_j = indices[j]
+            sum += distances[idx_i][idx_j]
+
+    return sum / m
+
 
 # Find neighbors
 # To find neighbors we have to flip the bit of one of the 1 bits, 
@@ -79,18 +107,18 @@ def hill_climbing():
     it = 0
     while True : 
         it += 1
-        print(f'{it}. solution: {solution}')
+        print(f'iteration {it}')
 
         # calculate cost of current solution
         cost = calculate_cost(solution)
-        print(f' - cost: {cost}')
 
         # find neighbors
         neighbors = find_neighbors(solution)
 
         # find the cost of each of the neighbors
         cost_neighbors = []
-        for neighbor in neighbors: 
+
+        for neighbor in neighbors:
             cost_neighbors.append(calculate_cost(neighbor))
 
 
