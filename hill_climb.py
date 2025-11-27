@@ -116,10 +116,10 @@ def hill_climbing():
         neighbors = find_neighbors(solution)
 
         # find the cost of each of the neighbors
-        cost_neighbors = []
+        cost_neighbors = np.zeros(len(neighbors))
 
-        for neighbor in neighbors:
-            cost_neighbors.append(calculate_cost(neighbor))
+        for i in range(len(neighbors)):
+            cost_neighbors[i] = (calculate_cost(neighbors[i]))
 
 
         index = np.argmax(cost_neighbors)
@@ -132,5 +132,7 @@ def hill_climbing():
 solution = hill_climbing()
 print(f'Final solution: {solution}')
 print(f'Final cost: {calculate_cost(solution)}')
+
+
 # Close the file
 file.close()
