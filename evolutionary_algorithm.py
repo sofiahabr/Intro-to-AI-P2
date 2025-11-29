@@ -1,18 +1,13 @@
-# Evolutionary algorithm 
-
 import numpy as np
 import random
 
 
 # Read file 
-file = open("tourism_5.txt", 'r')
-
+file = open("tourism_500.txt", 'r')
 line_list = file.readlines()
 
-
-# C is the ammount of total landmarks, and m is the amount to be in the solution
+# C is the amount of total landmarks, and m is the amount to be in the solution
 c, m = line_list[0].split()
-
 c = int(c)
 m = int(m)
 
@@ -21,7 +16,6 @@ lines = []
 
 for i in range(len(line_list)):
     lines.append(line_list[i].split())
-
 
 # Create a matrix to keep track of distances
 distances = np.zeros((c, c))
@@ -34,98 +28,134 @@ for line in lines:
     distances[i][j] = dist
     distances[j][i] = dist
 
-# A population of solutions
-# The best are selected to continue on to the next generation
-# The best are selected for breeding, combining so that each solution is combined with another to create 2 children
-# There is always a 1 % chance of random mutation 
 
-
-# Calculate cost of a solution 
+# Calculate cost of a solution (sum of pairwise distances)
 def calculate_cost(sol):
-    indices = np.where(sol == 1)[0]
+    sol = sol.astype(int)  # Ensure integer indices
+    total_cost = 0
+    for i in range(m):
+        for j in range(i + 1, m):
+            idx_i = sol[i] - 1
+            idx_j = sol[j] - 1
+            total_cost += distances[idx_i][idx_j]
+    
+    return total_cost  # Return total cost (lower is better)
 
-    sum = 0
-    for i in range(len(indices)):
-        for j in range(i + 1, len(indices)):
-            idx_i = indices[i]
-            idx_j = indices[j]
-            sum += distances[idx_i][idx_j]
 
-    return sum / m
+# Combines 2 parents to make 1 child using crossover
+def create_children(parent1, parent2):
+    parent1 = parent1.astype(int)
+    parent2 = parent2.astype(int)
+    
+    if np.array_equal(parent1, parent2):
+        return parent1.copy()
+    
+    remaining = np.array([x for x in parent2 if x not in parent1])
+    parents = [*parent1, *remaining]
 
-# Combines 2 parents to make 1 child
-def create_child(parent1, parent2):
-    indices_p1 = np.where(parent1 == 1)[0]
-    indices_p2 = np.where(parent2 == 1)[0]
-
-    combined_indices = []
-    child = np.zeros(c)
-
-    for i in range(m//2): 
-        index = indices_p1[i]
-        combined_indices.append(index)
-        child[index] = 1
-
-    for i in range(1, m + 1): 
-        if indices_p2[-i] not in combined_indices and len(combined_indices) < m: 
-            index = indices_p2[-i]
-            combined_indices.append(index)
-            child[index] = 1
-
+    child = np.zeros(m, dtype=int)
+    
+    for i in range(m // 2):
+        child[i] = parents[i]
+    
+    for i in range(m // 2, m):
+        child[i] = parents[- 1 + (m//2 - i)]
+    
     return child
 
-def create_children(p1, p2): 
-    return create_child(p1, p2), create_child(p2, p1)
 
-# Mutates a solution using swap / random replacement
-# Since we have t have the same amount of 1 in each solution we have to tick one down as we tick one up
-# This results in swap mutation
+# Mutates a solution by replacing a random landmark
 def mutate(sol):
-    indices_1 = np.where(sol == 1)[0]
-    indices_0 = np.where(sol == 0)[0]
-
-    # choses the indexes of the bits were swapping
-    index0 = indices_0[random.randint(0, len(indices_0) - 1)]
-    index1 = indices_1[random.randint(0, len(indices_1) - 1)]
-
-    # swaps the indexes
-    sol[index1] = 0
-    sol[index0] = 1
-
-    return sol 
+    sol = sol.astype(int)
+    index = random.randint(0, m - 1)
+    
+    random_replacement = random.randint(1, c)
+    while random_replacement in sol:
+        random_replacement = random.randint(1, c)
+    
+    sol[index] = random_replacement
+    return sol
 
 
 # Generates a random solution
-def generate_random_solution() : 
-    solution = np.zeros(c)
-
-    while True:
-        i = random.randint(0,c - 1)
-        if solution.sum() < m: 
-            solution[i] = 1 - solution[i]
-        else : 
-            break
-
+def generate_random_solution():
+    solution = np.zeros(m, dtype=int)
+    
+    for i in range(m):
+        landmark = random.randint(1, c)
+        while landmark in solution:
+            landmark = random.randint(1, c)
+        solution[i] = landmark
+    
     return solution
 
 
-# Generates a random popultaion of n solutions 
-def generate_population(n) : 
-    list = []
-
-    for i in range(n): 
+# Generates a random population of n solutions
+def generate_population(n):
+    population = []
+    
+    for i in range(n):
         sol = generate_random_solution()
-        while any(np.array_equal(sol, s) for s in list): 
-            print('Solution already exists in list')
+        while any(np.array_equal(sol, s) for s in population):
             sol = generate_random_solution()
+        population.append(sol)
+    
+    return population
 
-        list.append(sol)
 
-    return list
+def evolutionary_algorithm():
+    pop_size = 50
+    population = generate_population(pop_size)
+    population = [(element, calculate_cost(element)) for element in population]
+
+    # top 50% is parents
+    top = len(population) // 2
+    print(f'Amount of parents: {top}')
+
+    # top 20% is elite
+    elite = len(population) // 10
+    if elite == 0 : elite = 3
+    print(f'Amount of elite: {elite}')
+    
+    for generation in range(500):
+        # Sort by cost
+        population.sort(key=lambda x: -x[1])
+        
+        if (generation + 1)%10 == 0: 
+            avg_fitness = sum([element[1] for element in population]) / len(population)
+            print(f'Generation {generation + 1}: Avg cost = {avg_fitness:.2f}, Best = {population[0][1]:.2f}')
+        
+        # Keep top 
+        population = population[:top]
+        
+        next_gen = []
+        
+        # Elitism: keep the best 10%
+        for i in range(elite): 
+            next_gen.append(population[i][0].copy())
+        
+        # Generate children through crossover and mutation
+        while len(next_gen) < pop_size:
+            p1_index = random.randint(0, len(population) - 1)
+            p2_index = random.randint(0, len(population) - 1)
+            
+            if p1_index != p2_index:
+                child = create_children(population[p1_index][0], population[p2_index][0])
+                
+                # 10% mutation rate
+                if random.randint(1, 10) == 1:
+                    child = mutate(child)
+                
+                next_gen.append(child)
+        
+        # Evaluate new population
+        population = [(element, calculate_cost(element)) for element in next_gen[:20]]
+    
+    # Return best solution
+    population.sort(key=lambda x: -x[1])
+    print(f'\nFinal best solution: {np.sort(population[0][0])}')
+    print(f'Final best cost: {population[0][1]:.2f}')
+    return population[0]
 
 
-p1 = generate_random_solution()
-
-print(p1)
-for i in range(50):
-    print(mutate(p1))
+evolutionary_algorithm()
