@@ -6,6 +6,9 @@ import random
 file = open("tourism_500.txt", 'r')
 line_list = file.readlines()
 
+# Close the file
+file.close()
+
 # C is the amount of total landmarks, and m is the amount to be in the solution
 c, m = line_list[0].split()
 c = int(c)
@@ -29,7 +32,7 @@ for line in lines:
     distances[j][i] = dist
 
 
-# Calculate cost of a solution (sum of pairwise distances)
+# Calculate cost of a solution
 def calculate_cost(sol):
     sol = sol.astype(int)  # Ensure integer indices
     total_cost = 0
@@ -39,7 +42,7 @@ def calculate_cost(sol):
             idx_j = sol[j] - 1
             total_cost += distances[idx_i][idx_j]
     
-    return total_cost  # Return total cost (lower is better)
+    return total_cost / m  # Return avg distance between landmarks
 
 
 # Combines 2 parents to make 1 child using crossover
@@ -112,9 +115,9 @@ def evolutionary_algorithm():
     top = len(population) // 2
     print(f'Amount of parents: {top}')
 
-    # top 20% is elite
+    # top 10% is elite
     elite = len(population) // 10
-    if elite == 0 : elite = 3
+    if elite < 3 : elite = 3
     print(f'Amount of elite: {elite}')
     
     for generation in range(500):
@@ -125,7 +128,7 @@ def evolutionary_algorithm():
             avg_fitness = sum([element[1] for element in population]) / len(population)
             print(f'Generation {generation + 1}: Avg cost = {avg_fitness:.2f}, Best = {population[0][1]:.2f}')
         
-        # Keep top 
+        # Keep top 50% as parents for the next gen
         population = population[:top]
         
         next_gen = []
