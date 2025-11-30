@@ -11,17 +11,19 @@ The probability decreases exponentially with the badness of the move, the amount
 The probability decreases as the tempature T goes down. 
 Bad moves become more unlikely as the T decreases, until it reaches 0.
 """
+#  Simulated annealing local search algorithm
 
 import numpy as np
 import random
 import math
 
-#  Hill climbing local search algorithm
 
 # Read file 
 file = open("tourism_500.txt", 'r')
-
 line_list = file.readlines()
+
+# Close the file
+file.close()
 
 
 # C is the ammount of total landmarks, and m is the amount to be in the solution
@@ -90,7 +92,9 @@ def find_random_neighbor(solution):
 
     return solution, calculate_cost(solution)
 
-
+"""
+The final algorithm that iterates through simulated annealing
+"""
 
 # Runs simulated annealing algorithm 
 def simulated_annealing(): 
@@ -104,8 +108,9 @@ def simulated_annealing():
     T = 1000
     cooling_rate = 0.955
 
-
+    # Runs the algorithm 500 times
     for i in range(500): 
+        # Finds and evaluates a random neighbor of the solution
         neighbor, neighbor_cost = find_random_neighbor(current)
         delta_E = neighbor_cost - current_cost
 
@@ -125,7 +130,7 @@ def simulated_annealing():
                 current, current_cost = neighbor, neighbor_cost
                 
                 """
-        if T < 0.00001: 
+        if T < 0.001: 
             print(f'Iteration {i + 1}; T = {T}, best cost: {best_cost}')
             break
 
