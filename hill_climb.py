@@ -4,7 +4,7 @@ import random
 #  Hill climbing local search algorithm
 
 # Read file 
-file = open("tourism_100.txt", 'r')
+file = open("tourism_500.txt", 'r')
 
 line_list = file.readlines()
 
@@ -37,16 +37,18 @@ for line in lines:
 # Generate a random beginning solution
 # A soultion is represented by binary list, where 1 means the landmark is included and 0 means it isnt 
 def find_random_start() : 
-    solution = np.zeros(c)
+    solution = np.zeros(m)
 
-    while True:
-        i = random.randint(0,c - 1)
-        if solution.sum() < m: 
-            solution[i] = 1 - solution[i]
-        else : 
-            break
+    for i in range(len(solution)): 
+        index = random.randint(1, c)
+        while index in solution: 
+            index = random.randint(1, c)
+        
+        solution[i] = index
 
     return solution
+
+
 
 """
 # Calculate cost of a solution 
@@ -68,47 +70,36 @@ def calculate_cost(sol):
 
 # Calculate cost of a solution 
 def calculate_cost(sol):
-    indices = np.where(sol == 1)[0]
-
     sum = 0
-    for i in range(len(indices)):
-        for j in range(i + 1, len(indices)):
-            idx_i = indices[i]
-            idx_j = indices[j]
+    for i in range(m):
+        for j in range(i + 1, m):
+            idx_i = int(sol[i] - 1)
+            idx_j = int(sol[j] - 1)
             sum += distances[idx_i][idx_j]
 
     return sum / m
 
-
 # Find neighbors
-# To find neighbors we have to flip the bit of one of the 1 bits, 
-# and flip the bit of one of the 0 bits.  
+# To find neighbors we have to change 1 of the landmarks
 def find_neighbors(sol): 
-    indicies_1 = np.where(sol == 1)[0]
-    indicies_0 = np.where(sol == 0)[0]
+    sol_set = set(sol)
+    
+    for i in range(len(sol)):
+        for j in range(1, c + 1):
+            if j not in sol_set:
+                neighbor = sol.copy()
+                neighbor[i] = j
+                yield neighbor
 
-    neighbors = []
 
-    for i in indicies_1:
-        neighbor = sol.copy()     
-        neighbor[i] = 0; 
-        for j in indicies_0:
-            neighbor_i = neighbor.copy()
-            neighbor_i[j] = 1
-            neighbors.append(neighbor_i)
-
-    return neighbors
 
 # Run the hill climbing search algorithm 
 def hill_climbing(): 
     solution = find_random_start()
-    # print(f'start solution: {solution}')
 
     it = 0
     while True : 
         it += 1
-        print(f'iteration {it}')
-
         # calculate cost of current solution
         cost = calculate_cost(solution)
 
@@ -128,10 +119,109 @@ def hill_climbing():
         else: 
             break
     return solution
+"""
+def find_better_neighbor(sol): 
+    current_cost = calculate_cost(sol)
+    neighbor_cost = 0
+    neighbor = sol.copy()
 
-solution = hill_climbing()
-print(f'Final solution: {solution}')
-print(f'Final cost: {calculate_cost(solution)}')
+    for i in range(len(sol)):
+        for j in range(1, c + 1):
+            if j not in sol:
+                neighbor = sol.copy()
+                neighbor[i] = j
+
+                neighbor_cost = calculate_cost(neighbor)
+
+                if neighbor_cost > current_cost: 
+                    return neighbor
+                    
+    return sol
+
+"""
+def find_better_neighbor(sol): 
+    current_cost = calculate_cost(sol)
+    current_best = sol
+
+    with multiprocessing.Pool(processes=4) as pool:
+        for i in range(len(sol)//4 + 1):
+            for j in range(1, c + 1):
+                if j not in sol:
+                    neighbor1 = sol.copy()
+                    neighbor2 = sol.copy()
+                    neighbor3 = sol.copy()
+                    neighbor4 = sol.copy()
+                    
+                    neighbor1[i] = j
+                    neighbor2[len(sol)//4 + i] = j
+                    neighbor3[2*len(sol)//4 + i] = j
+                    neighbor4[3*len(sol)//4 + i] = j
+
+                    cost1 = pool.apply_async(calculate_cost, args=(neighbor1,))     # calculate_cost(neighbor1)
+                    cost2 = pool.apply_async(calculate_cost, args=(neighbor2,))     # calculate_cost(neighbor2)
+                    cost3 = pool.apply_async(calculate_cost, args=(neighbor3,))     # calculate_cost(neighbor2)
+                    cost4 = pool.apply_async(calculate_cost, args=(neighbor4,))     # calculate_cost(neighbor2)
+
+                    best = np.argmax([cost1.get(), cost2.get(), cost3.get(), cost4.get()])
+
+                    if cost1.get() > current_cost and best == 0: 
+                        current_best, current_cost = neighbor1, cost1.get()
+
+                    elif cost2.get() > current_cost and best == 1: 
+                        current_best, current_cost = neighbor2, cost2.get()
+                    
+                    elif cost3.get() > current_cost and best == 2: 
+                        current_best, current_cost = neighbor3, cost3.get()
+                    
+                    elif cost4.get() > current_cost and best == 3: 
+                        current_best, current_cost = neighbor4, cost4.get()
+                    
+                    
+    return current_best, current_cost
+
+# Run the hill climbing search algorithm 
+def hill_climbing():
+    current = find_random_start()
+    cost_current = calculate_cost(current)
+
+    it = 0
+    while True: 
+        neighbor, cost_neighbor = find_better_neighbor(current)
+
+        it += 1
+        print(f'{it}. Iteration: current: {cost_current:.2f}, neighbor: {cost_neighbor:.2f}')
+
+        if cost_neighbor > cost_current: 
+            current = neighbor
+            cost_current = cost_neighbor
+
+        elif cost_neighbor <= cost_current: 
+            return current
+
+
+        """
+        
+        # Find all neighbors and their costs
+        neighbors = find_neighbors(current)
+        costs = np.array([calculate_cost(n) for n in neighbors])
+
+        # Find best neighbor
+        best_idx = np.argmax(costs)
+        best_cost = costs[best_idx]
+        
+        # If best neighbor is better, move to it
+        if best_cost > cost_current:
+            current = neighbors[best_idx]
+        else:
+            # No improving neighbor found - local optimum reached
+            break
+            
+            """
+
+if __name__ == '__main__':
+    solution = hill_climbing()
+    print(f'Final solution: {solution}')
+    print(f'Final cost: {calculate_cost(solution):.2f}')
 
 
 # Close the file
