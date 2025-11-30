@@ -1,10 +1,11 @@
 import numpy as np
 import random
+import multiprocessing
 
 #  Hill climbing local search algorithm
 
 # Read file 
-file = open("tourism_500.txt", 'r')
+file = open("tourism_100.txt", 'r')
 
 line_list = file.readlines()
 
@@ -153,14 +154,14 @@ def find_better_neighbor(sol):
                     neighbor4 = sol.copy()
                     
                     neighbor1[i] = j
-                    neighbor2[len(sol)//4 + i] = j
-                    neighbor3[2*len(sol)//4 + i] = j
-                    neighbor4[3*len(sol)//4 + i] = j
+                    neighbor2[len(sol)//4] = j
+                    neighbor3[2*len(sol)//4] = j
+                    neighbor4[3*len(sol)//4] = j
 
                     cost1 = pool.apply_async(calculate_cost, args=(neighbor1,))     # calculate_cost(neighbor1)
                     cost2 = pool.apply_async(calculate_cost, args=(neighbor2,))     # calculate_cost(neighbor2)
-                    cost3 = pool.apply_async(calculate_cost, args=(neighbor3,))     # calculate_cost(neighbor2)
-                    cost4 = pool.apply_async(calculate_cost, args=(neighbor4,))     # calculate_cost(neighbor2)
+                    cost3 = pool.apply_async(calculate_cost, args=(neighbor3,))     # calculate_cost(neighbor3)
+                    cost4 = pool.apply_async(calculate_cost, args=(neighbor4,))     # calculate_cost(neighbor4)
 
                     best = np.argmax([cost1.get(), cost2.get(), cost3.get(), cost4.get()])
 
