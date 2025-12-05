@@ -3,7 +3,7 @@ import random
 
 
 # Read file 
-file = open("tourism_500.txt", 'r')
+file = open("tourism_5.txt", 'r')
 line_list = file.readlines()
 
 # Close the file
@@ -156,6 +156,31 @@ def generate_population(n):
     return population
 
 
+def tournament_selection(population, tournament_size): 
+        parents = []
+        # Tournament selection
+        while len(parents) < 2: 
+            tournament = random.sample(population, tournament_size )
+            parents.append(max(tournament, key=lambda x: x[1])[0])
+
+        return parents
+
+
+def roulette_wheel_selection(population): 
+    fitnesses = [being[1] for being in population]
+    total_fitness = sum(fitnesses)
+
+    if total_fitness <= 0: 
+        return random.choice(population)[0]
+    
+    pick = random(0, total_fitness)
+    current = 0
+
+    for solution, fitness in population: 
+        current += fitness
+        if current >= pick: 
+            return solution
+
 def evolutionary_algorithm():
     pop_size = 40
     population = generate_population(pop_size)
@@ -170,36 +195,34 @@ def evolutionary_algorithm():
     if elite < 3 : elite = 3
     print(f'Amount of elite: {elite}')
     
-    for generation in range(500):
-        # Sort by cost
-        population.sort(key=lambda x: -x[1])
-        
+    for generation in range(500):       
         if (generation + 1)%10 == 0: 
             avg_fitness = sum([element[1] for element in population]) / len(population)
             print(f'Generation {generation + 1}: Avg cost = {avg_fitness:.2f}, Best = {population[0][1]:.2f}')
         
-        # Keep top 50% as parents for the next gen
-        population = population[:top]
-        
+
         next_gen = []
-        
-        # Elitism: keep the best 10%
+
+        population.sort(key=lambda x: -x[1])  # Sort in-place
         for i in range(elite): 
-            next_gen.append(population[i][0].copy())
+            next_gen.append(population[i][0].copy())  # population[i] is (solution, fitness) tuple
         
         # Generate children through crossover and mutation
         while len(next_gen) < pop_size:
-            p1_index = random.randint(0, len(population) - 1)
-            p2_index = random.randint(0, len(population) - 1)
+            # Tournament selection
+            p1, p2 = tournament_selection(population, 10)
+
+            # Roulette selection 
+            # p1 = roulette_wheel_selection(population)
+            # p2 = roulette_wheel_selection(population)
             
-            if p1_index != p2_index:
-                child = create_children(population[p1_index][0], population[p2_index][0])
+            child = create_children(p1, p2)
                 
-                # 10% mutation rate
-                if random.randint(1, 10) == 1:
-                    child = mutate(child)
+            # 10% mutation rate
+            if random.randint(1, 10) == 1:
+                child = mutate(child)
                 
-                next_gen.append(child)
+            next_gen.append(child)
         
         # Evaluate new population
         population = [(element, calculate_cost(element)) for element in next_gen]
