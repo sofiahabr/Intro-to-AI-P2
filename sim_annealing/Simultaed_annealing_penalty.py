@@ -67,12 +67,22 @@ def generate_random_solution():
     
     return solution
 
+"""
+With penalty
+"""
 # Calculate cost of a solution (sum of pairwise distances)
 def calculate_cost(sol):
     sol = sol.astype(int)  
+
+    # If there are any duplicates, the solutions value is 0
+    if len(set(sol)) != m: 
+        return 0
+    
+
     total_cost = 0
     for i in range(m):
         for j in range(i + 1, m):
+
             idx_i = sol[i] - 1
             idx_j = sol[j] - 1
             total_cost += distances[idx_i][idx_j]
@@ -84,13 +94,12 @@ def find_random_neighbor(solution):
     solution = solution.astype(int)
     index = random.randint(0, m - 1)
     
-    random_replacement = random.randint(1, c)
-    while random_replacement in solution:
-        random_replacement = random.randint(1, c)
-    
+    random_replacement = random.randint(1, c)  
     solution[index] = random_replacement
 
     return solution, calculate_cost(solution)
+
+
 
 """
 The final algorithm that iterates through simulated annealing

@@ -34,7 +34,11 @@ for line in lines:
 
 # Calculate cost of a solution
 def calculate_cost(sol):
-    sol = sol.astype(int)  # Ensure integer indices
+    sol = sol.astype(int) 
+
+    # For penalty 
+    if len(set(sol)) != m: return 0
+    
     total_cost = 0
     for i in range(m):
         for j in range(i + 1, m):
@@ -44,7 +48,7 @@ def calculate_cost(sol):
     
     return total_cost / m  # Return avg distance between landmarks
 
-
+"""
 # Combines 2 parents to make 1 child using crossover
 def create_children(parent1, parent2):
     parent1 = parent1.astype(int)
@@ -66,18 +70,64 @@ def create_children(parent1, parent2):
     
     return child
 
+"""
 
-# Mutates a solution by replacing a random landmark
+# One point crossover 
+def create_children(parent1, parent2):
+    parent1 = np.sort(parent1)
+    parent2 = np.sort(parent2)
+
+    child = np.zeros(m, dtype=int)
+
+    for i in range(m//2): 
+        child[i] = parent1[i]
+
+    for i in range(m//2, m): 
+        child[i] = parent2[i]
+
+    return child
+"""
+
+# Uniform crossover 
+def create_children(parent1, parent2):
+    parent1 = np.sort(parent1)
+    parent2 = np.sort(parent2)
+    
+    child = np.zeros(m, dtype=int)
+
+    for i in range(m):
+        if random.randint(0,1) == 0: 
+            child[i] = parent1[i] 
+
+        else: 
+            child[i] = parent2[i]
+
+    return child
+"""
+
+# Mutates a solution by swap mutation / random replacement
 def mutate(sol):
     sol = sol.astype(int)
     index = random.randint(0, m - 1)
     
     random_replacement = random.randint(1, c)
-    while random_replacement in sol:
-        random_replacement = random.randint(1, c)
-    
     sol[index] = random_replacement
     return sol
+
+"""
+# Mutates a solution by two-site swap mutation
+def mutate(sol):
+    sol = sol.astype(int)
+    index = random.randint(0, m - 1)
+    index2 = random.randint(0, m - 1)
+    
+    random_replacement = random.randint(1, c)
+    random_replacement_2 = random.randint(1, c)
+
+    sol[index] = random_replacement
+    sol[index2] = random_replacement_2
+    return sol
+"""
 
 
 # Generates a random solution
@@ -107,7 +157,7 @@ def generate_population(n):
 
 
 def evolutionary_algorithm():
-    pop_size = 50
+    pop_size = 40
     population = generate_population(pop_size)
     population = [(element, calculate_cost(element)) for element in population]
 
@@ -152,7 +202,7 @@ def evolutionary_algorithm():
                 next_gen.append(child)
         
         # Evaluate new population
-        population = [(element, calculate_cost(element)) for element in next_gen[:20]]
+        population = [(element, calculate_cost(element)) for element in next_gen]
     
     # Return best solution
     population.sort(key=lambda x: -x[1])
