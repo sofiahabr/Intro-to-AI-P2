@@ -45,35 +45,26 @@ def calculate_cost(sol):
     
     return total_cost / m 
 
-"""
-# Combines 2 parents to make 1 child using crossover
-def create_children(parent1, parent2):
-    parent1 = parent1.astype(int)
-    parent2 = parent2.astype(int)
+def repair(sol): 
+    # Get unique elements from solution
+    unique = list(set(sol))
     
-    if np.array_equal(parent1, parent2):
-        return parent1.copy()
+    # If already have m or more unique, just take first m
+    if len(unique) >= m:
+        return np.array(unique[:m], dtype=int)
     
-    remaining = np.array([x for x in parent2 if x not in parent1])
-    parents = [*parent1, *remaining]
+    # Find missing landmarks
+    all_landmarks = set(range(1, c + 1))
+    missing = list(all_landmarks - set(unique))
+    
+    # Combine unique + missing to get exactly m elements
+    result = unique + missing[:m - len(unique)]
+    
+    return np.array(result, dtype=int)
 
-    child = np.zeros(m, dtype=int)
-    
-    for i in range(m // 2):
-        child[i] = parents[i]
-    
-    for i in range(m // 2, m):
-        child[i] = parents[- 1 + (m//2 - i)]
-    
-    return child
-"""
-"""
 
 # One point crossover 
 def create_children(parent1, parent2):
-    parent1 = np.sort(parent1)
-    parent2 = np.sort(parent2)
-
     child = np.zeros(m, dtype=int)
 
     for i in range(m//2): 
@@ -82,17 +73,13 @@ def create_children(parent1, parent2):
     for i in range(m//2, m): 
         child[i] = parent2[i]
 
-    # Repair the child if it has duplicates
-    while len(set(child)) != m: 
-        child = [*set(child), (random.randint(1, c))]
+    child = repair(child)
 
     return child
 """
 
 # Uniform crossover 
 def create_children(parent1, parent2):
-    parent1 = np.sort(parent1)
-    parent2 = np.sort(parent2)
     
     child = np.zeros(m, dtype=int)
 
@@ -104,42 +91,32 @@ def create_children(parent1, parent2):
             child[i] = parent2[i]
 
     # Repair the child if it has duplicates
-    while len(set(child)) != m: 
-        child = [*set(child), (random.randint(1, c))]
+    child = repair(child)
+
 
     return child
+"""
 
-# Mutates a solution by replacing a random landmark
+
+# Mutates a solution by random replacement
 def mutate(sol):
-    sol = sol
+    sol = sol.copy()
+    amount = len(sol) // 10
+    if amount < 1 : amount = 1
+    
     index = random.randint(0, m - 1)
-    
-    random_replacement = random.randint(1, c)
-
-    while random_replacement in sol:
-        random_replacement = random.randint(1, c)
-    
-    
-    sol[index] = random_replacement
-    return sol
-
-# Mutates a solution by swap mutation / random replacement
-def mutate(sol):
-    sol = sol
-    index = random.randint(0, m - 1)
-    
+        
     random_replacement = random.randint(1, c)
     sol[index] = random_replacement
 
-    while len(set(sol)) != m: 
-        sol = [*set(sol), (random.randint(1, c))]
+    sol = repair(sol)
 
     return sol
 
 """
 # Mutates a solution by two-site swap mutation
 def mutate(sol):
-    sol = sol.astype(int)
+    sol = sol.copy().astype(int)
     index = random.randint(0, m - 1)
     index2 = random.randint(0, m - 1)
     
@@ -157,26 +134,22 @@ def mutate(sol):
 
 # Generates a random solution
 def generate_random_solution():
-    solution = np.zeros(m)
-    
-    for i in range(m):
-        landmark = random.randint(1, c)
-        while landmark in solution:
-            landmark = random.randint(1, c)
-        solution[i] = landmark
-    
-    return solution
+    return np.random.choice(c, m, replace=False) + 1
 
 
 # Generates a random population of n solutions
 def generate_population(n):
     population = []
+    seen = set()  # ← IMPORTANT: Initialize OUTSIDE the loop
     
-    for i in range(n):
-        sol = generate_random_solution()
-        while any(np.array_equal(sol, s) for s in population):
+    for i in range(n):  # ← Only one loop needed
+        while True:
             sol = generate_random_solution()
-        population.append(sol)
+            sol_tuple = tuple(sorted(sol))  # Position-independent uniqueness
+            if sol_tuple not in seen:
+                seen.add(sol_tuple)
+                population.append(sol)
+                break
     
     return population
 
@@ -197,7 +170,7 @@ def roulette_wheel_selection(population):
     if total_fitness <= 0: 
         return random.choice(population)[0]
     
-    pick = random(0, total_fitness)
+    pick = random.uniform(0, total_fitness)
     current = 0
 
     for solution, fitness in population: 
@@ -206,7 +179,7 @@ def roulette_wheel_selection(population):
             return solution
 
 def evolutionary_algorithm():
-    pop_size = 40
+    pop_size = 60
     population = generate_population(pop_size)
     population = [(element, calculate_cost(element)) for element in population]
 
@@ -220,7 +193,7 @@ def evolutionary_algorithm():
     if elite < 3 : elite = 3
     print(f'Amount of elite: {elite}')
     
-    for generation in range(500):       
+    for generation in range(1000):       
         if (generation + 1)%10 == 0: 
             avg_fitness = sum([element[1] for element in population]) / len(population)
             print(f'Generation {generation + 1}: Avg cost = {avg_fitness:.2f}, Best = {population[0][1]:.2f}')
@@ -234,16 +207,16 @@ def evolutionary_algorithm():
         # Generate children through crossover and mutation
         while len(next_gen) < pop_size:
             # Tournament selection
-            p1, p2 = tournament_selection(population, 10)
+            # p1, p2 = tournament_selection(population, 10)
 
             # Roulette selection 
-            # p1 = roulette_wheel_selection(population)
-            # p2 = roulette_wheel_selection(population)
+            p1 = roulette_wheel_selection(population)
+            p2 = roulette_wheel_selection(population)
             
             child = create_children(p1, p2)
                 
             # 10% mutation rate
-            if random.randint(1, 10) == 1:
+            if random.random() > 0.85:
                 child = mutate(child)
                 
             next_gen.append(child)

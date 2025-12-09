@@ -57,15 +57,7 @@ Start of helper functions
 """
 # Generates a random solution
 def generate_random_solution():
-    solution = np.zeros(m, dtype=int)
-    
-    for i in range(m):
-        landmark = random.randint(1, c)
-        while landmark in solution:
-            landmark = random.randint(1, c)
-        solution[i] = landmark
-    
-    return solution
+    return np.random.choice(c, m, replace=False) + 1
 
 """
 With penalty
@@ -74,26 +66,25 @@ With penalty
 def calculate_cost(sol):
     sol = sol.astype(int)  
 
-    # If there are any duplicates, the solutions value is 0
+    # If there are any duplicates, the solution's value is 0
     if len(set(sol)) != m: 
         return 0
     
-
     total_cost = 0
     for i in range(m):
         for j in range(i + 1, m):
-
             idx_i = sol[i] - 1
             idx_j = sol[j] - 1
             total_cost += distances[idx_i][idx_j]
     
-    return total_cost / m   
+    return total_cost / m  
 
 # Finds a random neighbor of the current solution (similar to mutation) 
 def find_random_neighbor(solution):
-    solution = solution.astype(int)
-    index = random.randint(0, m - 1)
+    solution = solution.copy().astype(int)
     
+    # Single-site replacement
+    index = random.randint(0, m - 1)
     random_replacement = random.randint(1, c)  
     solution[index] = random_replacement
 
@@ -115,37 +106,35 @@ def simulated_annealing():
 
     # Variables
     T = 1000
-    cooling_rate = 0.955
+    cooling_rate = 0.985
 
     # Runs the algorithm 500 times
-    for i in range(500): 
+    for i in range(20000): 
         # Finds and evaluates a random neighbor of the solution
         neighbor, neighbor_cost = find_random_neighbor(current)
         delta_E = neighbor_cost - current_cost
 
         if (i + 1)%10 == 0: 
-            print(f'Iteration {i + 1}; T = {T}, best cost: {best_cost}')
+            print(f'Iteration {i + 1}; T = {T:.2f}, best cost: {best_cost:.2f}')
 
         # If the solution is better, accept it
         if delta_E > 0 : 
             current, current_cost = neighbor, neighbor_cost
 
-            # setting the new current as best known solution: 
-            best, best_cost = current, current_cost
-        
-        else: 
-            probability = math.exp(delta_E / T)
-            if random.random() < probability: 
-                current, current_cost = neighbor, neighbor_cost
-                
-                """
-        if T < 0.001: 
-            print(f'Iteration {i + 1}; T = {T}, best cost: {best_cost}')
-            break
+            if current_cost > best_cost:
+                # setting the new current as best known solution: 
+                best, best_cost = current.copy(), current_cost
 
-                """
-            
+
+        else: 
+            if T > 1e-10:
+                probability = math.exp(delta_E / T)
+                if random.random() < probability: 
+                    current, current_cost = neighbor, neighbor_cost
+        
         T = T * cooling_rate
+
+                
 
     print()
     print(f'Final solution: {np.sort(best)}')

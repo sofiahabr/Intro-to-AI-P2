@@ -3,7 +3,7 @@ import random
 
 
 # Read file 
-file = open("tourism_5.txt", 'r')
+file = open("tourism_500.txt", 'r')
 line_list = file.readlines()
 
 # Close the file
@@ -47,13 +47,10 @@ def calculate_cost(sol):
             total_cost += distances[idx_i][idx_j]
     
     return total_cost / m  # Return avg distance between landmarks
-
 """
+
 # Combines 2 parents to make 1 child using crossover
 def create_children(parent1, parent2):
-    parent1 = parent1.astype(int)
-    parent2 = parent2.astype(int)
-    
     if np.array_equal(parent1, parent2):
         return parent1.copy()
     
@@ -69,14 +66,11 @@ def create_children(parent1, parent2):
         child[i] = parents[- 1 + (m//2 - i)]
     
     return child
-
 """
+
 
 # One point crossover 
 def create_children(parent1, parent2):
-    parent1 = np.sort(parent1)
-    parent2 = np.sort(parent2)
-
     child = np.zeros(m, dtype=int)
 
     for i in range(m//2): 
@@ -90,9 +84,6 @@ def create_children(parent1, parent2):
 
 # Uniform crossover 
 def create_children(parent1, parent2):
-    parent1 = np.sort(parent1)
-    parent2 = np.sort(parent2)
-    
     child = np.zeros(m, dtype=int)
 
     for i in range(m):
@@ -107,9 +98,9 @@ def create_children(parent1, parent2):
 
 # Mutates a solution by swap mutation / random replacement
 def mutate(sol):
-    sol = sol.astype(int)
+    sol = sol.copy()
     index = random.randint(0, m - 1)
-    
+        
     random_replacement = random.randint(1, c)
     sol[index] = random_replacement
     return sol
@@ -117,7 +108,7 @@ def mutate(sol):
 """
 # Mutates a solution by two-site swap mutation
 def mutate(sol):
-    sol = sol.astype(int)
+    sol = sol.astype(int).copy()
     index = random.randint(0, m - 1)
     index2 = random.randint(0, m - 1)
     
@@ -132,26 +123,22 @@ def mutate(sol):
 
 # Generates a random solution
 def generate_random_solution():
-    solution = np.zeros(m, dtype=int)
-    
-    for i in range(m):
-        landmark = random.randint(1, c)
-        while landmark in solution:
-            landmark = random.randint(1, c)
-        solution[i] = landmark
-    
-    return solution
+    return np.random.choice(c, m, replace=False) + 1
 
 
 # Generates a random population of n solutions
 def generate_population(n):
     population = []
+    seen = set()  # ← IMPORTANT: Initialize OUTSIDE the loop
     
-    for i in range(n):
-        sol = generate_random_solution()
-        while any(np.array_equal(sol, s) for s in population):
+    for i in range(n):  # ← Only one loop needed
+        while True:
             sol = generate_random_solution()
-        population.append(sol)
+            sol_tuple = tuple(sorted(sol))  # Position-independent uniqueness
+            if sol_tuple not in seen:
+                seen.add(sol_tuple)
+                population.append(sol)
+                break
     
     return population
 
@@ -173,7 +160,7 @@ def roulette_wheel_selection(population):
     if total_fitness <= 0: 
         return random.choice(population)[0]
     
-    pick = random(0, total_fitness)
+    pick = random.uniform(0, total_fitness)
     current = 0
 
     for solution, fitness in population: 
@@ -182,21 +169,21 @@ def roulette_wheel_selection(population):
             return solution
 
 def evolutionary_algorithm():
-    pop_size = 40
+    pop_size = 100
     population = generate_population(pop_size)
     population = [(element, calculate_cost(element)) for element in population]
 
     # top 50% is parents
-    top = len(population) // 2
-    print(f'Amount of parents: {top}')
+    par = len(population) // 2
+    print(f'Amount of parents: {par}')
 
     # top 10% is elite
-    elite = len(population) // 10
+    elite = len(population) // 8
     if elite < 3 : elite = 3
     print(f'Amount of elite: {elite}')
     
-    for generation in range(500):       
-        if (generation + 1)%10 == 0: 
+    for generation in range(1000):       
+        if (generation + 1)%10 == 0 or generation == 0: 
             avg_fitness = sum([element[1] for element in population]) / len(population)
             print(f'Generation {generation + 1}: Avg cost = {avg_fitness:.2f}, Best = {population[0][1]:.2f}')
         
@@ -210,11 +197,11 @@ def evolutionary_algorithm():
         # Generate children through crossover and mutation
         while len(next_gen) < pop_size:
             # Tournament selection
-            p1, p2 = tournament_selection(population, 10)
+            # p1, p2 = tournament_selection(population, 10)
 
-            # Roulette selection 
-            # p1 = roulette_wheel_selection(population)
-            # p2 = roulette_wheel_selection(population)
+            # Roulette wheel selection
+            p1 = roulette_wheel_selection(population)
+            p2 = roulette_wheel_selection(population)
             
             child = create_children(p1, p2)
                 
