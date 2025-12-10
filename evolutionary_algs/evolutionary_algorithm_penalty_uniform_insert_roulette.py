@@ -1,7 +1,6 @@
 import numpy as np
 import random
 
-
 # Read file 
 file = open("tourism_500.txt", 'r')
 line_list = file.readlines()
@@ -47,40 +46,6 @@ def calculate_cost(sol):
             total_cost += distances[idx_i][idx_j]
     
     return total_cost / m  # Return avg distance between landmarks
-"""
-
-# Combines 2 parents to make 1 child using crossover
-def create_children(parent1, parent2):
-    if np.array_equal(parent1, parent2):
-        return parent1.copy()
-    
-    remaining = np.array([x for x in parent2 if x not in parent1])
-    parents = [*parent1, *remaining]
-
-    child = np.zeros(m, dtype=int)
-    
-    for i in range(m // 2):
-        child[i] = parents[i]
-    
-    for i in range(m // 2, m):
-        child[i] = parents[- 1 + (m//2 - i)]
-    
-    return child
-"""
-
-
-# One point crossover 
-def create_children(parent1, parent2):
-    child = np.zeros(m, dtype=int)
-
-    for i in range(m//2): 
-        child[i] = parent1[i]
-
-    for i in range(m//2, m): 
-        child[i] = parent2[i]
-
-    return child
-"""
 
 # Uniform crossover 
 def create_children(parent1, parent2):
@@ -94,7 +59,6 @@ def create_children(parent1, parent2):
             child[i] = parent2[i]
 
     return child
-"""
 
 # Mutates a solution by swap mutation / random replacement
 def mutate(sol):
@@ -104,21 +68,6 @@ def mutate(sol):
     random_replacement = random.randint(1, c)
     sol[index] = random_replacement
     return sol
-
-"""
-# Mutates a solution by two-site swap mutation
-def mutate(sol):
-    sol = sol.astype(int).copy()
-    index = random.randint(0, m - 1)
-    index2 = random.randint(0, m - 1)
-    
-    random_replacement = random.randint(1, c)
-    random_replacement_2 = random.randint(1, c)
-
-    sol[index] = random_replacement
-    sol[index2] = random_replacement_2
-    return sol
-"""
 
 
 # Generates a random solution
@@ -196,9 +145,6 @@ def evolutionary_algorithm():
         
         # Generate children through crossover and mutation
         while len(next_gen) < pop_size:
-            # Tournament selection
-            # p1, p2 = tournament_selection(population, 10)
-
             # Roulette wheel selection
             p1 = roulette_wheel_selection(population)
             p2 = roulette_wheel_selection(population)

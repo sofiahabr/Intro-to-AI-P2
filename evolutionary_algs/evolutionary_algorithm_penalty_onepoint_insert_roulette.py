@@ -34,33 +34,19 @@ for line in lines:
 
 # Calculate cost of a solution
 def calculate_cost(sol):
-    sol = sol 
+    sol = sol.astype(int) 
 
+    # For penalty 
+    if len(set(sol)) != m: return 0
+    
     total_cost = 0
     for i in range(m):
         for j in range(i + 1, m):
-            idx_i = int(sol[i]) - 1
-            idx_j = int(sol[j]) - 1
+            idx_i = sol[i] - 1
+            idx_j = sol[j] - 1
             total_cost += distances[idx_i][idx_j]
     
-    return total_cost / m 
-
-def repair(sol): 
-    # Get unique elements from solution
-    unique = list(set(sol))
-    
-    # If already have m or more unique, just take first m
-    if len(unique) >= m:
-        return np.array(unique[:m], dtype=int)
-    
-    # Find missing landmarks
-    all_landmarks = set(range(1, c + 1))
-    missing = list(all_landmarks - set(unique))
-    
-    # Combine unique + missing to get exactly m elements
-    result = unique + missing[:m - len(unique)]
-    
-    return np.array(result, dtype=int)
+    return total_cost / m  # Return avg distance between landmarks
 
 
 # One point crossover 
@@ -73,64 +59,16 @@ def create_children(parent1, parent2):
     for i in range(m//2, m): 
         child[i] = parent2[i]
 
-    child = repair(child)
-
     return child
-"""
 
-# Uniform crossover 
-def create_children(parent1, parent2):
-    
-    child = np.zeros(m, dtype=int)
-
-    for i in range(m):
-        if random.randint(0,1) == 0: 
-            child[i] = parent1[i] 
-
-        else: 
-            child[i] = parent2[i]
-
-    # Repair the child if it has duplicates
-    child = repair(child)
-
-
-    return child
-"""
-
-
-# Mutates a solution by random replacement
+# Mutates a solution by insert mutation
 def mutate(sol):
     sol = sol.copy()
-    amount = len(sol) // 10
-    if amount < 1 : amount = 1
-    
     index = random.randint(0, m - 1)
         
     random_replacement = random.randint(1, c)
     sol[index] = random_replacement
-
-    sol = repair(sol)
-
     return sol
-
-"""
-# Mutates a solution by two-site swap mutation
-def mutate(sol):
-    sol = sol.copy().astype(int)
-    index = random.randint(0, m - 1)
-    index2 = random.randint(0, m - 1)
-    
-    random_replacement = random.randint(1, c)
-    random_replacement_2 = random.randint(1, c)
-
-    sol[index] = random_replacement
-    sol[index2] = random_replacement_2
-
-    while len(set(sol)) != m: 
-        sol = [*set(sol), (random.randint(1, c))]
-
-    return sol
-"""
 
 # Generates a random solution
 def generate_random_solution():
@@ -140,18 +78,19 @@ def generate_random_solution():
 # Generates a random population of n solutions
 def generate_population(n):
     population = []
-    seen = set()  # ← IMPORTANT: Initialize OUTSIDE the loop
+    seen = set() 
     
-    for i in range(n):  # ← Only one loop needed
+    for i in range(n):  
         while True:
             sol = generate_random_solution()
-            sol_tuple = tuple(sorted(sol))  # Position-independent uniqueness
+            sol_tuple = tuple(sorted(sol))  
             if sol_tuple not in seen:
                 seen.add(sol_tuple)
                 population.append(sol)
                 break
     
     return population
+
 
 def tournament_selection(population, tournament_size): 
         parents = []
@@ -179,25 +118,25 @@ def roulette_wheel_selection(population):
             return solution
 
 def evolutionary_algorithm():
-    pop_size = 60
+    pop_size = 100
     population = generate_population(pop_size)
     population = [(element, calculate_cost(element)) for element in population]
 
     # top 50% is parents
-    top = len(population) // 2
-    print(f'Amount of parents: {top}')
-
+    par = len(population) // 2
+    print(f'Amount of parents: {par}')
 
     # top 10% is elite
-    elite = len(population) // 10
+    elite = len(population) // 8
     if elite < 3 : elite = 3
     print(f'Amount of elite: {elite}')
     
     for generation in range(1000):       
-        if (generation + 1)%10 == 0: 
+        if (generation + 1)%10 == 0 or generation == 0: 
             avg_fitness = sum([element[1] for element in population]) / len(population)
             print(f'Generation {generation + 1}: Avg cost = {avg_fitness:.2f}, Best = {population[0][1]:.2f}')
         
+
         next_gen = []
 
         population.sort(key=lambda x: -x[1])  # Sort in-place
@@ -206,17 +145,14 @@ def evolutionary_algorithm():
         
         # Generate children through crossover and mutation
         while len(next_gen) < pop_size:
-            # Tournament selection
-            # p1, p2 = tournament_selection(population, 10)
-
-            # Roulette selection 
+            # Roulette wheel selection
             p1 = roulette_wheel_selection(population)
             p2 = roulette_wheel_selection(population)
             
             child = create_children(p1, p2)
                 
             # 10% mutation rate
-            if random.random() > 0.85:
+            if random.randint(1, 10) == 1:
                 child = mutate(child)
                 
             next_gen.append(child)
@@ -232,6 +168,3 @@ def evolutionary_algorithm():
 
 
 evolutionary_algorithm()
-# p1 = generate_random_solution()
-# p2 = generate_random_solution()
-# print(create_children(p1, p2))
