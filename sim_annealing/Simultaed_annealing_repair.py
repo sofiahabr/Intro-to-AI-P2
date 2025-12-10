@@ -97,10 +97,10 @@ def find_random_neighbor(solution):
     index = random.randint(0, m - 1)
     
     random_replacement = random.randint(1, c)
-    while random_replacement in solution:
-        random_replacement = random.randint(1, c)
     
     solution[index] = random_replacement
+
+    solution = repair(solution)
     return solution, calculate_cost(solution)
 
 """
