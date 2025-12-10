@@ -1,16 +1,3 @@
-# Simultaed annealing
-
-"""
-Simulates shaking a ball out of smaller groves. 
-Starts with large shakes, then reduces the intencity untill it cant dislodge any balls anymore. 
-
-The overall structure is similar to hill climbing. 
-Instead of picking the best move, it picks a random move, and if the move improves the situation it is always accepted. 
-Otherwise the algoritm accepts the move with a probability of less than 1. 
-The probability decreases exponentially with the badness of the move, the amount $\Delta E$  by which the equation is worsened. 
-The probability decreases as the tempature T goes down. 
-Bad moves become more unlikely as the T decreases, until it reaches 0.
-"""
 #  Simulated annealing local search algorithm
 
 import numpy as np
@@ -104,7 +91,13 @@ def find_random_neighbor(solution):
     return solution, calculate_cost(solution)
 
 """
-The final algorithm that iterates through simulated annealing
+The final simulated annealing algorithm
+
+Variables:
+    T = 1000
+    cooling_rate = 0.95
+    iterations = 5000
+
 """
 
 # Runs simulated annealing algorithm 
@@ -119,13 +112,13 @@ def simulated_annealing():
     T = 1000
     cooling_rate = 0.95
 
-    # Runs the algorithm 500 times
-    for i in range(15000): 
+    # Runs the algorithm 5 000 times
+    for i in range(5000): 
         # Finds and evaluates a random neighbor of the solution
         neighbor, neighbor_cost = find_random_neighbor(current)
         delta_E = neighbor_cost - current_cost
 
-        if (i + 1)%10 == 0: 
+        if (i + 1) % 10 == 0: 
             print(f'Iteration {i + 1}; T = {T:.2f}, best cost: {best_cost:.2f}')
 
         # If the solution is better, accept it
