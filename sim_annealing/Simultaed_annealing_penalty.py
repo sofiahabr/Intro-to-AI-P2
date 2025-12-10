@@ -3,6 +3,7 @@
 import numpy as np
 import random
 import math
+import time
 
 
 # Read file 
@@ -91,6 +92,9 @@ Variables:
 
 # Runs simulated annealing algorithm 
 def simulated_annealing(): 
+    # track time
+    start_time = time.time()
+
     current = generate_random_solution()
     current_cost = calculate_cost(current)
 
@@ -107,7 +111,7 @@ def simulated_annealing():
         neighbor, neighbor_cost = find_random_neighbor(current)
         delta_E = neighbor_cost - current_cost
 
-        if (i + 1)%10 == 0: 
+        if (i + 1) % 10 == 0: 
             print(f'Iteration {i + 1}; T = {T:.2f}, best cost: {best_cost:.2f}')
 
         # If the solution is better, accept it
@@ -128,10 +132,12 @@ def simulated_annealing():
         T = T * cooling_rate
 
                 
+    elapsed_time = time.time() - start_time
 
     print()
     print(f'Final solution: {np.sort(best)}')
     print(f'Final cost: {best_cost}')
-    return best, best_cost
+    return best_cost, best, 5000, elapsed_time
+
 
 simulated_annealing()
