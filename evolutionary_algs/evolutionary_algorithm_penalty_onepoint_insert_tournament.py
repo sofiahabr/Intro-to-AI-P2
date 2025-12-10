@@ -172,7 +172,7 @@ def run(test_file):
         print(f'\nFinal best solution: {population[0][0]}')
         print(f'Final best cost: {population[0][1]:.2f}')
 
-        return population[0][0], population[0][1], 1000, elapsed_time
+        return (population[0][0], population[0][1], 1000, elapsed_time)
 
 
     return evolutionary_algorithm()

@@ -149,7 +149,7 @@ def run(test_file):
         print()
         print(f'Final solution: {np.sort(best)}')
         print(f'Final cost: {best_cost}')
-        return best_cost, best, 5000, elapsed_time
+        return (best_cost, best, 5000, elapsed_time)
 
 
     return simulated_annealing()
