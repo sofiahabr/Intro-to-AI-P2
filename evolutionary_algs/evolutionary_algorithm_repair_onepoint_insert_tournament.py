@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import time
 
 
 # Read file 
@@ -141,25 +142,28 @@ def roulette_wheel_selection(population):
             return solution
 
 def evolutionary_algorithm():
-    pop_size = 60
+    # track time
+    start_time = time.time()
+
+    pop_size = 100
     population = generate_population(pop_size)
     population = [(element, calculate_cost(element)) for element in population]
 
     # top 50% is parents
-    top = len(population) // 2
-    print(f'Amount of parents: {top}')
-
+    par = len(population) // 2
+    print(f'Amount of parents: {par}')
 
     # top 10% is elite
-    elite = len(population) // 10
+    elite = len(population) // 8
     if elite < 3 : elite = 3
     print(f'Amount of elite: {elite}')
     
     for generation in range(1000):       
-        if (generation + 1)%10 == 0: 
+        if (generation + 1)%10 == 0 or generation == 0: 
             avg_fitness = sum([element[1] for element in population]) / len(population)
             print(f'Generation {generation + 1}: Avg cost = {avg_fitness:.2f}, Best = {population[0][1]:.2f}')
         
+
         next_gen = []
 
         population.sort(key=lambda x: -x[1])  # Sort in-place
@@ -170,11 +174,11 @@ def evolutionary_algorithm():
         while len(next_gen) < pop_size:
             # Tournament selection
             p1, p2 = tournament_selection(population, 10)
-            
+           
             child = create_children(p1, p2)
                 
             # 10% mutation rate
-            if random.random() > 0.85:
+            if random.randint(1, 10) == 1:
                 child = mutate(child)
                 
             next_gen.append(child)
@@ -182,14 +186,17 @@ def evolutionary_algorithm():
         # Evaluate new population
         population = [(element, calculate_cost(element)) for element in next_gen]
     
+    
+    # Calculate elapsed time
+    elapsed_time = time.time() - start_time
+
+
     # Return best solution
     population.sort(key=lambda x: -x[1])
-    print(f'\nFinal best solution: {np.sort(population[0][0])}')
+    print(f'\nFinal best solution: {population[0][0]}')
     print(f'Final best cost: {population[0][1]:.2f}')
-    return population[0]
+
+    return population[0][0], population[0][1], 1000, elapsed_time
 
 
 evolutionary_algorithm()
-# p1 = generate_random_solution()
-# p2 = generate_random_solution()
-# print(create_children(p1, p2))

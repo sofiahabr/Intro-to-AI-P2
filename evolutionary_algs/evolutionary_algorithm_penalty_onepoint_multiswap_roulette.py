@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import time
 
 
 # Read file 
@@ -126,6 +127,9 @@ def roulette_wheel_selection(population):
             return solution
 
 def evolutionary_algorithm():
+    # track time
+    start_time = time.time()
+
     pop_size = 100
     population = generate_population(pop_size)
     population = [(element, calculate_cost(element)) for element in population]
@@ -168,11 +172,15 @@ def evolutionary_algorithm():
         # Evaluate new population
         population = [(element, calculate_cost(element)) for element in next_gen]
     
+    # Calculate elapsed time
+    elapsed_time = time.time() - start_time
+
+
     # Return best solution
     population.sort(key=lambda x: -x[1])
-    print(f'\nFinal best solution: {np.sort(population[0][0])}')
+    print(f'\nFinal best solution: {population[0][0]}')
     print(f'Final best cost: {population[0][1]:.2f}')
-    return population[0]
 
+    return population[0][0], population[0][1], 1000, elapsed_time
 
 evolutionary_algorithm()
