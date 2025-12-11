@@ -136,12 +136,7 @@ def run(test_file):
         if elite < 3 : elite = 3
         print(f'Amount of elite: {elite}')
         
-        for generation in range(1000):       
-            if (generation + 1)%10 == 0 or generation == 0: 
-                avg_fitness = sum([element[1] for element in population]) / len(population)
-                print(f'Generation {generation + 1}: Avg cost = {avg_fitness:.2f}, Best = {population[0][1]:.2f}')
-            
-
+        for generation in range(500):       
             next_gen = []
 
             population.sort(key=lambda x: -x[1])  # Sort in-place
@@ -174,7 +169,7 @@ def run(test_file):
         print(f'\nFinal best solution: {population[0][0]}')
         print(f'Final best cost: {population[0][1]:.2f}')
 
-        return (population[0][0], population[0][1], 1000, elapsed_time)
+        return (population[0][1], population[0][0], 1000, elapsed_time)
 
 
     return evolutionary_algorithm()

@@ -123,9 +123,6 @@ def run(test_file):
             neighbor, neighbor_cost = find_random_neighbor(current)
             delta_E = neighbor_cost - current_cost
 
-            if (i + 1) % 10 == 0: 
-                print(f'Iteration {i + 1}; T = {T:.2f}, best cost: {best_cost:.2f}')
-
             # If the solution is better, accept it
             if delta_E > 0 : 
                 current, current_cost = neighbor, neighbor_cost

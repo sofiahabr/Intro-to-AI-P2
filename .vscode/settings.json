@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./src/evolutionary_algs",
+        "./src/sim_annealing"
+    ]
+}
