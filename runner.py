@@ -17,8 +17,8 @@ import traceback
 import json
 
 # Configuration
-NUM_RUNS = 10
-TIMEOUT_SECONDS = 3000
+NUM_RUNS = 5
+TIMEOUT_SECONDS = 500
 TEST_FILES_DIR = "./data"
 OUTPUT_DIR = "./results"
 ALGORITHMS_BASE_DIR = "./src"

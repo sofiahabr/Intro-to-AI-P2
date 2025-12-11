@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import random
 import time
 
@@ -123,6 +124,10 @@ def run(test_file):
         start_time = time.time()
 
         pop_size = 40
+        # In your generate_population function or main algorithm
+        if c <= 10:  # For small problems
+            pop_size = min(pop_size, math.comb(c, m))  # Can't have more unique solutions than possible
+            
         population = generate_population(pop_size)
         population = [(element, calculate_cost(element)) for element in population]
 
